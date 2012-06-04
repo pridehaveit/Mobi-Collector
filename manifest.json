@@ -1,0 +1,14 @@
+{
+	"name": "Mobi Collector",
+	"version": "0.1",
+	"background_page": "background.html",
+	"browser_action": {
+		"default_title": "Mobi Collector",
+		"default_popup": "popup.html"
+	},
+	"permissions": [
+		"contextMenus",
+		"tabs",
+		"*://*/*"
+	]
+}

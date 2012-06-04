@@ -1,0 +1,18 @@
+<html>
+<head>
+<title>mobi</title>
+<script src="popup.js"></script>
+</head>
+<body onload="javascipt:start();">
+<form action="#">
+Title: <input type="text" name="title" id="title" size="32" maxlength="32" onkeyup="setTitle(this.form.title.value);"/>
+Author: <input type="text" name="author" id="author" size="32" maxlength="32" onkeyup="setAuthor(this.form.author.value);"/>
+<input type="button" value="Save Mobi" onclick="save();"/>
+</form>
+<hr/>
+<a href="#" onclick="addContent();">Add selected content</a> | <a href="#" onclick="deleteAllContent();">Delete all content</a>
+<hr/>
+<table id="content" width="600">
+</table>
+</body>
+</html>
