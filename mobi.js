@@ -17,35 +17,97 @@ function Mobi(content, images, metadata)
 	if (!m.metadata.sublang)
 		m.metadata.sublang = 0 // None
 	
-	m.compression = 1; // no compression
-	//m.compression = 2; // PalmDOC compression
+	//m.compression = 1; // no compression
+	m.compression = 2; // PalmDOC compression
 }
 
-Mobi.prototype.lzwEncode = function(s)
- {
-    var dict = {};
-    var data = (s + "").split("");
-    var out = [];
-    var currChar;
-    var phrase = data[0];
-    var code = 256;
-    for (var i=1; i<data.length; i++) {
-        currChar=data[i];
-        if (dict[phrase + currChar] != null) {
-            phrase += currChar;
-        }
-        else {
-            out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
-            dict[phrase + currChar] = code;
-            code++;
-            phrase=currChar;
-        }
-    }
-    out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
-    for (var i=0; i<out.length; i++) {
-        out[i] = String.fromCharCode(out[i]);
-    }
-    return out.join("");
+Mobi.prototype.cpalmdoc_memcmp = function(data, a, b, len)
+{
+	for (var i = 0; i < len; i++)
+		if (data[a+i] != data[b+i])
+			return false;
+	return true;
+}
+
+Mobi.prototype.cpalmdoc_rfind = function(data, pos, chunk_length)
+{
+	var m = this;
+	
+	for (var i = pos - chunk_length; i >= 0; i--) 
+	{
+		if (m.cpalmdoc_memcmp(data, i, pos, chunk_length))
+			return i;
+	}
+	return pos;
+}
+
+Mobi.prototype.compress = function(b)
+{
+	var m = this;
+	
+	var output = [];
+	var i = 0;
+	while (i < b.length)
+	{
+		var c = b[i];
+		// do repeats
+		if (i > 10 && (b.length - i) > 10)
+		{
+			var found = false;
+			for (var chunk_len = 10; chunk_len > 2; chunk_len--) {
+				var j = m.cpalmdoc_rfind(b, i, chunk_len);
+				var dist = i - j;
+				if (j < i && dist < 2048) {
+					found = true;
+					var compound = (dist << 3) + chunk_len - 3;
+					output.push(0x80 + (compound >> 8));
+					output.push(compound & 0xFF);
+					i += chunk_len;
+					break;
+				}
+			}
+			if (found) continue;
+		}
+
+		//write single character
+		i++;
+		if (c == 32 && i < b.length)
+		{
+			var n = b[i];
+			if (n >= 0x40 && n <= 0x7F)
+			{
+				output.push(n ^ 0x80);
+				i++;
+				continue;
+			}
+		}
+		if (c == 0 || (c > 8 && c < 0x80))
+		{
+			output.push(c);
+		}
+		// Write binary data
+		else
+		{
+			var j = i;
+			var temp = [];
+			temp.push(c);
+			while (j < b.length && temp.length < 8)
+			{
+				c = b[j];
+				if (c == 0 || (c > 8 && c < 0x80))
+					break;
+				temp.push(c);
+				j++;
+			}
+			i += temp.length - 1;
+			output.push(temp.length);
+			for (j = 0; j < temp.length; j++)
+			{
+				output.push(temp[j]);
+			}
+		}
+	}
+	return output;
 }
 
 Mobi.prototype.create = function()
@@ -61,12 +123,12 @@ Mobi.prototype.create = function()
 	while (pos < m.content.length)
 	{
 		var length = Math.min(4096, m.content.length - pos);
-		var block = m.content.substr(pos, 4096)
+		var block = m.stringToArray(m.content.substr(pos, 4096));
 		if (m.compression == 2) // PalmDOC compression
 		{
-			block = m.lzwEncode(block);
+			block = m.compress(block);
 		}
-		m.records[m.nRecords] = m.stringToArray(block);
+		m.records[m.nRecords] = block;
 		m.nRecords++;
 		m.nTextRecords++;
 		pos += 4096;
