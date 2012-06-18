@@ -120,6 +120,7 @@ Mobi.prototype.create = function()
 	m.nTextRecords = 0;
 
 	var pos = 0;
+	var compressedLength = 0;
 	while (pos < m.content.length)
 	{
 		var length = Math.min(4096, m.content.length - pos);
@@ -128,6 +129,7 @@ Mobi.prototype.create = function()
 		{
 			block = m.compress(block);
 		}
+		compressedLength += block.length;
 		m.records[m.nRecords] = block;
 		m.nRecords++;
 		m.nTextRecords++;
@@ -136,7 +138,7 @@ Mobi.prototype.create = function()
 
 	m.lastContentRecord = m.nRecords;
 
-	var padding = ((Math.floor((m.content.length - 1) / 4) + 1) * 4) - m.content.length;
+	var padding = ((Math.floor((compressedLength - 1) / 4) + 1) * 4) - compressedLength;
 	if (padding > 0)
 	{
 		var paddingArray = new Uint8Array(padding);
