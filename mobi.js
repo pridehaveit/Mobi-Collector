@@ -14,8 +14,10 @@ function Mobi(content, images, metadata)
 		m.metadata.type = 2; // Mobipocket Book
 	if (!m.metadata.lang)
 		m.metadata.lang = 9 // English
+		//m.metadata.lang = 29 // Swedish
 	if (!m.metadata.sublang)
 		m.metadata.sublang = 0 // None
+		//m.metadata.sublang = 1 // Swedish
 	
 	//m.compression = 1; // no compression
 	m.compression = 2; // PalmDOC compression
@@ -125,12 +127,13 @@ Mobi.prototype.create = function()
 	while (pos < contentWithZero.length)
 	{
 		var length = Math.min(4096, contentWithZero.length - pos);
-		var block = m.stringToArray(contentWithZero.substr(pos, 4096));
+		var block = m.stringToArray(contentWithZero.substr(pos, length));
 		if (m.compression == 2) // PalmDOC compression
 		{
 			block = m.compress(block);
 		}
 		compressedLength += block.length;
+		block.push(0x00);
 		m.records[m.nRecords] = block;
 		m.nRecords++;
 		m.nTextRecords++;
@@ -525,7 +528,7 @@ Mobi.prototype.stringToArray = function(str)
 {
 	var m = this;
 
-	var arr = new Uint8Array(str.length);
+	var arr = [];
 	m.setStringInArray(str, arr, 0);
 	return arr;
 }
