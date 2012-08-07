@@ -123,11 +123,10 @@ Mobi.prototype.create = function()
 
 	var pos = 0;
 	var compressedLength = 0;
-	var contentWithZero = m.content + "\0";
-	while (pos < contentWithZero.length)
+	while (pos < m.content.length)
 	{
-		var length = Math.min(4096, contentWithZero.length - pos);
-		var block = m.stringToArray(contentWithZero.substr(pos, length));
+		var length = Math.min(4096, m.content.length - pos);
+		var block = m.stringToArray(m.content.substr(pos, length));
 		if (m.compression == 2) // PalmDOC compression
 		{
 			block = m.compress(block);
